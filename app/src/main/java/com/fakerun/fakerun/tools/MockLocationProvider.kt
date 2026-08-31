@@ -17,6 +17,16 @@ class MockLocationProvider(name: String, context: Context) {
     init {
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
+        // 先移除可能残留的测试provider。若上次运行时app被系统异常终止
+        // 而未执行清理，测试provider仍会残留在系统中（清除数据/重装app
+        // 无法移除它），此时直接调用 addTestProvider 会抛出
+        // "Provider xxx already exists" 异常。
+        try {
+            lm.removeTestProvider(providerName)
+        } catch (e: IllegalArgumentException) {
+            // provider不存在，或不是测试provider，忽略。
+        }
+
         lm.addTestProvider(providerName, isNetwork, isGps, isNetwork, false, true, true, true, Criteria.POWER_LOW, Criteria.ACCURACY_COARSE)
         lm.setTestProviderEnabled(providerName, true)
     }
